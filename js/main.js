@@ -52,10 +52,18 @@ jQuery(function($) {
       $('#available-snapshots').show();
       
     }).fail(function(response) {
-      console.log(response);
+      // console.log(response);
 
-      $errorOutput.text(response.responseJSON.message);
-      $errorOutput.show();
+      if(Object.hasOwnProperty('responseJSON')) {
+        $errorOutput.text(response.responseJSON.message);
+        $errorOutput.show();
+      } else if(Object.hasOwnProperty('statusText') 
+          && Object.hasOwnProperty('status') 
+          && Object.status == 504 
+          && Object.statusText == "Gateway Time-out") {
+        clear_output(10);
+        window.location.reload;        
+      }
 
     }).always(function(response) {
       $loader.hide();
