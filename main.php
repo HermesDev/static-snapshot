@@ -2,13 +2,13 @@
 
 /*
 
-Plugin Name: Get Static App
+Plugin Name: Get Static Snapshot App
 Plugin URI: http://hermesdevelopment.com
-Description: Get a static version of the website with wget
-Version: 0.0.1
+Description: Get a static version of your website with wget
+Version: 0.5.0
 Author: Hermes Development
 Author URI: http://hermesdevelopment.com
-License: Private
+License: GNU GPL2
 
  */
 
@@ -282,9 +282,13 @@ function website_snapshot_generate_static_site($name, $permalinks=null) {
       $wget_command .= $i !== $length - 1 ? $permalinks[$i] . ' ' : $permalinks[$i];  
     }
   }
-
+  die(json_encode(array('message' => 'debug1')));
   // execute wget command > should take a long time with videos
-  exec($wget_command);
+  try {
+    exec($wget_command);
+  } catch(Exception $e) {
+    die(json_encode(array('message' => $e)));
+  }
 
   // rename the project directory
   // rename($output_path . get_site_url(), $output_path . $name);
