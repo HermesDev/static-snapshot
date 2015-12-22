@@ -5,10 +5,10 @@
 Plugin Name: Get Static App
 Plugin URI: http://hermesdevelopment.com
 Description: Get a static version of the website with wget
-Version: 0.0.1
+Version: 0.1.0
 Author: Hermes Development
 Author URI: http://hermesdevelopment.com
-License: Private
+License: GPLv2 
 
  */
 
@@ -304,7 +304,7 @@ function website_snapshot_generate_static_site($name, $permalinks=null) {
  */
 function website_snapshot_static_exporter_options_install() {
   global $wpdb;
-  $table_name = $wpdb->prefix . "snapshot"; 
+  $table_name = $wpdb->prefix . "snapshot";
  
   // create table if none already exists
   if($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
@@ -321,4 +321,21 @@ function website_snapshot_static_exporter_options_install() {
  
 }
 // run the install scripts upon plugin activation
-register_activation_hook( __FILE__, 'website_snapshot_static_exporter_options_install' );
+register_activation_hook(__FILE__, 'website_snapshot_static_exporter_options_install');
+
+
+
+
+/**
+ * static_snapshot_on_deactivation if user deactivates the plugin
+ */
+function static_snapshot_on_deactivation() {
+  global $wpdb;
+  $table = $wpdb->prefix . "snapshot";
+
+  $wpdb->query("DROP TABLE IF EXISTS $table");
+}
+
+register_deactivation_hook(__FILE__, 'static_snapshot_on_deactivation');
+
+
