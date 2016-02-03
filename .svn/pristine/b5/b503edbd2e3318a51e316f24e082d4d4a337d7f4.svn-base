@@ -1,2 +1,0 @@
-# snapshot-press
-snapshot exporter
