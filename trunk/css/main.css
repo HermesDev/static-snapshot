@@ -1,0 +1,104 @@
+
+
+#snapshot-plugin .container {
+  margin: 20px auto;
+  width: 96%;
+}
+
+#snapshot-plugin h1 { 
+  text-align: center;
+  background-color: white;
+  padding: 1em 0;
+  border: 1px solid #e5e5e5;
+  -webkit-box-shadow: 0 1px 1px rgba(0,0,0,.04);
+  box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+#snapshot-plugin h2 {
+  margin-top: 50px;
+}
+
+#snapshot-plugin .input-group {
+  margin: 20px 0;
+}
+
+#snapshot-plugin input { 
+  font-size: 16px; 
+  border-color: #cccccc; 
+  border-style: solid; 
+  padding: 8px; 
+  border-width: 1px;  
+} 
+     
+#snapshot-plugin input:focus { 
+  outline: none; 
+} 
+
+#snapshot-plugin .btn {
+  background: #3498db;
+  background-image: -webkit-linear-gradient(top, #3498db, #2980b9);
+  background-image: -moz-linear-gradient(top, #3498db, #2980b9);
+  background-image: -ms-linear-gradient(top, #3498db, #2980b9);
+  background-image: -o-linear-gradient(top, #3498db, #2980b9);
+  background-image: linear-gradient(to bottom, #3498db, #2980b9);
+  font-family: Arial;
+  color: #ffffff;
+  font-size: 20px;
+  padding: 8px 20px 8px 20px;
+  text-decoration: none;
+  margin: 0;
+}
+
+#snapshot-plugin .btn:hover {
+  cursor: pointer;
+  background: #3cb0fd;
+  background-image: -webkit-linear-gradient(top, #3cb0fd, #3498db);
+  background-image: -moz-linear-gradient(top, #3cb0fd, #3498db);
+  background-image: -ms-linear-gradient(top, #3cb0fd, #3498db);
+  background-image: -o-linear-gradient(top, #3cb0fd, #3498db);
+  background-image: linear-gradient(to bottom, #3cb0fd, #3498db);
+  text-decoration: none;
+}
+
+#snapshot-plugin .output.error {
+  display: none;
+  color: #d54e21; 
+}
+
+#snapshot-plugin .font-download,
+#snapshot-plugin .font-delete {
+  cursor: pointer;
+  color: lightgray;
+}
+
+#snapshot-plugin .font-delete:hover {
+  color: tomato;
+}
+
+#snapshot-plugin .font-download:hover {
+  color: #0073ab;
+}
+
+#snapshot-plugin tr > th,
+#snapshot-plugin tr > td {
+  font-size: 1.2em;
+  text-align: center;
+}
+
+#snapshot-plugin a {
+  font-size: 1.4em;
+}
+
+#snapshot-plugin ~ #wpfooter {
+  display: none;
+}
+
+#snapshot-plugin .ball-grid-pulse {
+  display: none; 
+  margin-bottom: 20px;
+}
+
+#snapshot-plugin .ball-grid-pulse > div {
+  background-color: #3498db;
+}
+
