@@ -5,3 +5,5 @@ sftp-config*
 
 trunk
 .svn
+tags
+branches

@@ -2,13 +2,14 @@
 
 /*
 
-Plugin Name: Get Static Snapshot App
+Plugin Name: Get Static App
 Plugin URI: http://hermesdevelopment.com
-Description: Get a static version of your website with wget
-Version: 0.5.0
+Description: Get a static version of the website with wget
+Version: 0.1.0
 Author: Hermes Development
 Author URI: http://hermesdevelopment.com
-License: GNU GPL2
+License: GPLv2
+
  */
 
 define('WEBSITE_SNAPSHOT__PLUGIN_URL', plugin_dir_url( __FILE__ ));
@@ -68,7 +69,7 @@ function website_snapshot_create_snapshot_UI() { ?>
       </div>
         <div class="loader-inner ball-grid-pulse">
           <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
-        </div> 
+        </div>
       <div class="output-group">
         <span class="output error"></span>
       </div>
@@ -79,7 +80,7 @@ function website_snapshot_create_snapshot_UI() { ?>
       global $wpdb;
       $table_name = $wpdb->prefix . 'snapshot';
 
-      $snapshots = $wpdb->get_results( 
+      $snapshots = $wpdb->get_results(
         'SELECT id, name, creationDate FROM ' . $table_name
       ); ?>
 
@@ -88,15 +89,15 @@ function website_snapshot_create_snapshot_UI() { ?>
         <table class="widefat" cellspacing="0">
           <thead>
             <tr>
-              <th scope="col" max-width="50">ID</th> 
+              <th scope="col" max-width="50">ID</th>
               <th scope="col" max-width="200">Name</th>
               <th scope="col">Created the</th>
-              <th scope="col">Download</th> 
-              <th scope="col" max-width="50">Delete</th> 
+              <th scope="col">Download</th>
+              <th scope="col" max-width="50">Delete</th>
             </tr>
             </thead>
             <tbody>
-      
+
             <?php
             foreach($snapshots as $snapshot) {
               $snapshot_url = get_site_url() . '/' . $snapshot->name . '.tar'; ?>
@@ -107,7 +108,7 @@ function website_snapshot_create_snapshot_UI() { ?>
                 <td><?php $exploded_date = explode(' ', $snapshot->creationDate); echo $exploded_date[0] ?></td>
                 <td><a class="font-download" href="<?php echo $snapshot_url; ?>"><i class="fa fa-download"></i></a></td>
                 <td><a class="font-delete" id="delete-snapshot-<?php echo $snapshot->name; ?>"><i class="fa fa-times"></i></a></td>
-              </tr><?php 
+              </tr><?php
 
             } ?>
 
@@ -124,7 +125,7 @@ function website_snapshot_create_snapshot_UI() { ?>
           <td></td>
           <td><a class="font-download" href="<?php echo $snapshot_url; ?>"><i class="fa fa-download"></i></a></td>
           <td><a class="font-delete"><i class="fa fa-times"></i></a></td>
-        </tr>  
+        </tr>
       </table>
     </div><!-- end #snapshot-plugin -->
 
@@ -142,7 +143,7 @@ function website_snapshot_delete_snapshot() {
 
   // delete the database entry
   global $wpdb;
-  $wpdb->delete($wpdb->prefix . 'snapshot', array('name' => $name));  
+  $wpdb->delete($wpdb->prefix . 'snapshot', array('name' => $name));
 
   // success response
   header('Content-Type: application/json');
@@ -158,7 +159,7 @@ add_action('wp_ajax_nopriv_delete_snapshot', 'website_snapshot_delete_snapshot')
  * website_snapshot_add_snapshot_to_db insert the new snapshot to the snapshot table
  */
 function website_snapshot_add_snapshot_to_db() {
-  
+
   $name = get_sanitize_input_name($_POST['name']);
 
   // replace any space by underscore
@@ -172,7 +173,7 @@ function website_snapshot_add_snapshot_to_db() {
 
   // $permalinks = [];
   // if($the_query->have_posts()) {
-  //   for ($i=0, $length = count($the_query->posts); $i < $length; $i++) { 
+  //   for ($i=0, $length = count($the_query->posts); $i < $length; $i++) {
   //     $permalinks[] = get_permalink($the_query->posts[$i]->ID);
   //     // die(json_encode($the_query));
   //   }
@@ -201,7 +202,7 @@ function website_snapshot_add_snapshot_to_db() {
   $now->setTimezone(new DateTimeZone('US/Mountain'));
   $creation_date = $now->format('Y-m-d H:i:s');
 
-  $wpdb->insert($table_name, array('name' => $name, 'creationDate' => $creation_date), array('%s', '%s'));  
+  $wpdb->insert($table_name, array('name' => $name, 'creationDate' => $creation_date), array('%s', '%s'));
   $snapshot = $wpdb->get_row($selectQuery);
 
   $snapshot_url = get_site_url() . '/' . $snapshot->name . '.tar';
@@ -256,13 +257,13 @@ function set_error_headers() {
 add_action('wp_ajax_add_snapshot', 'website_snapshot_add_snapshot_to_db');
 add_action('wp_ajax_nopriv_add_snapshot', 'website_snapshot_add_snapshot_to_db');
 
-
 /**
  * Use wget to download a static version of the website
  */
 function website_snapshot_generate_static_site($name, $permalinks=null) {
   $static_site_dir = str_replace('http://', '', get_site_url());
   $output_path = plugin_dir_path( __FILE__ ) . 'output/';
+  $snapshot_path = $output_path . $name;
 
   $wget_command = 'wget ';
   $wget_command .= '--mirror ';
@@ -273,23 +274,23 @@ function website_snapshot_generate_static_site($name, $permalinks=null) {
   $wget_command .= '--exclude-directories=feed,comments,wp-content/plugins/static-exporter ';
   $wget_command .= '--execute robots=off ';
   $wget_command .= '--directory-prefix=' . plugin_dir_path( __FILE__ ) . 'output ';
-  
+
   if($permalinks === null) {
     $wget_command .= get_site_url();
   } else {
-    for ($i=0, $length = count($permalinks); $i < $length; $i++) { 
-      $wget_command .= $i !== $length - 1 ? $permalinks[$i] . ' ' : $permalinks[$i];  
+    for ($i=0, $length = count($permalinks); $i < $length; $i++) {
+      $wget_command .= $i !== $length - 1 ? $permalinks[$i] . ' ' : $permalinks[$i];
     }
   }
-  die(json_encode(array('message' => 'debug1')));
-  // execute wget command > should take a long time with videos
-  try {
-    exec($wget_command);
-  } catch(Exception $e) {
-    die(json_encode(array('message' => $e)));
-  }
 
-  // rename the project directory
+  // execute wget command > should take a long time with videos
+  exec($wget_command);
+
+  // rename the video paths
+
+  $snapshot_url = plugins_url('output/' . $name . '/', __FILE__);
+  create_relative_path_for_video($snapshot_path, $snapshot_url);
+
   // rename($output_path . get_site_url(), $output_path . $name);
 
   // create the tar file available for download
@@ -297,10 +298,74 @@ function website_snapshot_generate_static_site($name, $permalinks=null) {
   exec('cd ' . $output_path . ' && tar -cvf ' . get_home_path() . '/' . $name . '.tar ' . $name);
 
   // the archive is ready so delete the folder
-  exec('rm -rf ' . $output_path . $name);
+  exec('rm -rf ' . $snapshot_path);
 
 }
 
+/**
+* Walk directory, find files and search and replace absolute paths with relative paths
+*/
+function find_files_and_replace_absolute($dir = '.', $pattern = '/./', $snapshot_url){
+  $prefix = $dir . '/';
+  $dir = dir($dir);
+  while (false !== ($file = $dir->read())){
+    if ($file === '.' || $file === '..') continue;
+    $file = $prefix . $file;
+    $file_url = $snapshot_url . $file;
+    if (is_dir($file)) find_files_and_replace_absolute($file, $pattern, $snapshot_url);
+    if (preg_match($pattern, $file)){
+      echo $file . "\n";
+      echo $file_url . "\n";
+      $file_contents = get_file_contents_by_url($file_url);
+      $site_root_url = get_site_url();
+      var_dump($site_root_url);
+      $relative_path = get_relative_path($site_root_url, $file_url);
+      $file_contents = str_replace($site_root_url, $relative_path, $file_contents);
+      unlink($file);
+      write_content($file, $file_contents);
+    }
+  }
+}
+
+/**
+* Get relative path
+*/
+function get_relative_path($site_root_url, $file_url) {
+  $path_without_root = explode($site_root_url, $file_url)[1];
+  $count = count(explode('/', $path_without_root));
+  return str_repeat('/..', $count);
+}
+
+/**
+* Write new content to file
+*/
+function write_content($file, $file_contents) {
+  $fh = fopen($file, 'w') or die("can't open file");
+  fwrite($fh, $file_contents);
+  fclose($fh);
+}
+
+/**
+* Get file contents by URL
+*/
+function get_file_contents_by_url($url) {
+  $ch = curl_init();
+  curl_setopt($ch, CURLOPT_URL, $url);
+  curl_setopt($ch, CURLOPT_HEADER, false);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+  $file = curl_exec($ch);
+  curl_close($ch);
+  return $file;
+}
+
+/**
+* Set relative paths
+*/
+
+function create_relative_path_for_video($snapshot_path, $snapshot_url) {
+  // find_files_and_replace_absolute($snapshot_path, '/\.(html|css|js)$/');
+  find_files_and_replace_absolute($snapshot_path, '/\.$/', $snapshot_url);
+}
 
 /**
  * website_snapshot_static_exporter_options_install create the table
@@ -308,7 +373,7 @@ function website_snapshot_generate_static_site($name, $permalinks=null) {
 function website_snapshot_static_exporter_options_install() {
   global $wpdb;
   $table_name = $wpdb->prefix . "snapshot";
- 
+
   // create table if none already exists
   if($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
     $sql = 'CREATE TABLE wp_snapshot (
@@ -317,28 +382,11 @@ function website_snapshot_static_exporter_options_install() {
       creationDate DATETIME UNIQUE NOT NULL,
       PRIMARY KEY(id)
     );';
- 
+
     require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
     dbDelta($sql);
   }
- 
+
 }
 // run the install scripts upon plugin activation
-register_activation_hook(__FILE__, 'website_snapshot_static_exporter_options_install');
-
-
-
-
-/**
- * static_snapshot_on_deactivation if user deactivates the plugin
- */
-function static_snapshot_on_deactivation() {
-  global $wpdb;
-  $table = $wpdb->prefix . "snapshot";
-
-  $wpdb->query("DROP TABLE IF EXISTS $table");
-}
-
-register_deactivation_hook(__FILE__, 'static_snapshot_on_deactivation');
-
-
+register_activation_hook( __FILE__, 'website_snapshot_static_exporter_options_install' );
