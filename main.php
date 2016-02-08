@@ -263,7 +263,8 @@ add_action('wp_ajax_nopriv_add_snapshot', 'website_snapshot_add_snapshot_to_db')
 function website_snapshot_generate_static_site($name, $permalinks=null) {
   $static_site_dir = str_replace('http://', '', get_site_url());
   $output_path = plugin_dir_path( __FILE__ ) . 'output/';
-  $snapshot_path = $output_path . $name;
+  $snapshot_path = escapeshellargs($output_path . $name);
+  // SHELL ATTACK: escapeshellargs($snapshot_path) and exec(escapeshellcmd($foo))
 
   $wget_command = 'wget ';
   $wget_command .= '--mirror ';
