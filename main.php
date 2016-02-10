@@ -251,6 +251,7 @@ function website_snapshot_generate_static_site($name, $permalinks=null) {
   $wget_command = 'wget ';
   $wget_command .= '--mirror ';
   $wget_command .= '--adjust-extension ';
+  $wget_command .= '-H -Dgoogleapis.com,' . get_site_url() . ' ';
   $wget_command .= '--convert-links ';
   $wget_command .= '--page-requisites ';
   $wget_command .= '--retry-connrefused ';
@@ -268,6 +269,11 @@ function website_snapshot_generate_static_site($name, $permalinks=null) {
 
   // execute wget command > should take a long time with videos
   exec($wget_command);
+
+  // move google fonts css files inside home directory
+  // exec('');
+
+  // change link to google fonts inside html
 
   // rename the directory
   exec('cd ' . $output_path . ' && mv ' . $static_site_dir . ' ' . $name);
@@ -316,7 +322,7 @@ function find_files_and_replace_absolute($dir = '.', $pattern = '/./', $root_pat
  */
 function get_backtrack($root_path, $file, $pattern) {
   $path_after_root = explode($root_path, $file)[1]
-  $count = count(explode('/', $path_after_root)) - 1; // don't count empty split set 
+  $count = count(explode('/', $path_after_root)) - 1; // don't count empty split set
   $count = $count - 1; // don't count file as a directory
   return str_repeat('../', $count);
 }
