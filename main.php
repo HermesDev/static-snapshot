@@ -244,9 +244,10 @@ add_action('wp_ajax_nopriv_add_snapshot', 'website_snapshot_add_snapshot_to_db')
  * @param  $permalinks  array   getting only some pages of the websites [NOT TESTED]
  */
 function website_snapshot_generate_static_site($name, $permalinks=null) {
+  $name = esc_html($name); // $name is used in some exec
   $static_site_dir = str_replace('http://', '', get_site_url());
   $output_path = plugin_dir_path( __FILE__ ) . 'output/';
-  $snapshot_path = esc_html($output_path . $name);
+  $snapshot_path = $output_path . $name;
 
   $wget_command = 'wget ';
   $wget_command .= '--mirror ';
@@ -298,11 +299,12 @@ function find_files_and_replace_absolute($dir = '.', $pattern = '/./', $root_pat
     $file = $prefix . $file;
     if (is_dir($file)) find_files_and_replace_absolute($file, $pattern, $root_path);
     if (preg_match($pattern, $file)) {
-      $file_contents = read_content($file);
+      $content = read_content($file);
       $backtrack = get_backtrack($root_path, $file, $pattern);
-      $file_contents = str_replace(get_site_url() . '/', $backtrack, $file_contents);
+      // $content = str_replace(get_site_url() . '/', $backtrack, $content);
+      $content = format_content_for_local_use(get_site_url(), $backtrack, $content);
       unlink($file); // delete the file
-      write_content($file, $file_contents);
+      write_content($file, $content);
     }
   }
 }
@@ -312,17 +314,38 @@ function find_files_and_replace_absolute($dir = '.', $pattern = '/./', $root_pat
  * @param   $root_path  string  the root path of the site
  * @param   $file       string  the path of the file
  * @param   $pattern    string  the file types we are looking for
- * @return              string
+ * @return              string  repeat number of ../ one after the other
  */
 function get_backtrack($root_path, $file, $pattern) {
-  $path_after_root = explode($root_path, $file)[1]
+  $path_after_root = explode($root_path, $file)[1];
   $count = count(explode('/', $path_after_root)) - 1; // don't count empty split set 
   $count = $count - 1; // don't count file as a directory
   return str_repeat('../', $count);
 }
 
-function replace_file_contents($root_url, $backtrack, $file_contents) {
-  str_replace($root_url, $backtrack, $file_contents);
+/**
+ * format_content_for_local_use make sure the URLS are now locals
+ * @param  string $root_url  the root path of the site
+ * @param  string $backtrack the backtrack string (../ n times)
+ * @param  string $content   the current file contents
+ * @return string            the current file contents for local use
+ */
+function format_content_for_local_use($root_url, $backtrack, $content) {
+  // Get anything in single or double quotes that has the root_url in it
+  $pattern1 = '/(\'|")' . preg_quote($root_url, '/') . '\/(\.*\.\.*)(\'|")/';
+  $pattern2 = '/(\'|")' . preg_quote($root_url, '/') . '\/(.*)(\'|")/';
+
+  // Replace by quote ($1) + $backtrack (../) + extra slugs ($2) + /index.html (option) + quote ($3)
+  $replacement1 = '$1' . $backtrack . '$2$3';
+  $replacement2 = '$1' . $backtrack . '$2/index.html$3';
+
+  // Do the replaces and return the content
+  // preg_replace return: If matches are found, the new content will be returned, 
+  // otherwise content will be returned unchanged or NULL if an error occurred.
+  $content = preg_replace($pattern1, $replacement1, $content);
+  $content = preg_replace($pattern2, $replacement2, $content);
+
+  return $content;
 }
 
 /**
@@ -339,12 +362,12 @@ function read_content($file) {
 
 /**
  * Write new content to file
- * @param   $file           string  the path of the file
- * @param   $file_contents  string  the content of the file
+ * @param   $file     string  the path of the file
+ * @param   $content  string  the content of the file
  */
-function write_content($file, $file_contents) {
+function write_content($file, $content) {
   $file_handler = fopen($file, 'w+') or die("can't open file");
-  fwrite($file_handler, $file_contents);
+  fwrite($file_handler, $content);
   fclose($file_handler);
 }
 
