@@ -30,7 +30,7 @@ jQuery(function($) {
     }
 
     $('#snapshot-plugin .loader-inner.ball-grid-pulse').css('display', 'inline');
-
+    
     $.ajax({
       method: 'POST',
       url: 'admin-ajax.php',
@@ -52,7 +52,8 @@ jQuery(function($) {
       $('#available-snapshots').show();
       
     }).fail(function(response) {
-      // console.log(response);
+      console.log(response);
+      console.log(response.responseText);
 
       if(Object.hasOwnProperty('responseJSON')) {
         $errorOutput.text(response.responseJSON.message);

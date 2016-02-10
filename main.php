@@ -159,36 +159,17 @@ add_action('wp_ajax_nopriv_delete_snapshot', 'website_snapshot_delete_snapshot')
  * website_snapshot_add_snapshot_to_db insert the new snapshot to the snapshot table
  */
 function website_snapshot_add_snapshot_to_db() {
-
   $name = get_sanitize_input_name($_POST['name']);
 
   // replace any space by underscore
   $name = str_replace(' ', '_', $name);
-
-  // TODO: integrate this filter in plugin options
-  // $the_query = new WP_Query(array(
-  //   'post_type' => 'page',
-  //   'posts_per_page' => -1 // show all the posts
-  // ));
-
-  // $permalinks = [];
-  // if($the_query->have_posts()) {
-  //   for ($i=0, $length = count($the_query->posts); $i < $length; $i++) {
-  //     $permalinks[] = get_permalink($the_query->posts[$i]->ID);
-  //     // die(json_encode($the_query));
-  //   }
-  // } else {
-  //   header('HTTP/1.1 500 Internal Server Error');
-  //   header('Content-Type: application/json; charset=UTF-8');
-  //   die(json_encode(['message' => 'No posts with type "page" found']));
-  // }
-  // wp_reset_postdata();
 
   global $wpdb;
   $table_name = $wpdb->prefix . 'snapshot';
   $selectQuery = "SELECT * FROM " . $table_name . " WHERE name = '" . $name . "'";
 
   $snapshot = $wpdb->get_row($selectQuery);
+  // check if the snapshot name already exists
   if($snapshot != null) {
     set_error_headers();
     die(json_encode(array('message' => 'Snapshot name "' . $name . '" already exists')));
@@ -259,12 +240,13 @@ add_action('wp_ajax_nopriv_add_snapshot', 'website_snapshot_add_snapshot_to_db')
 
 /**
  * Use wget to download a static version of the website
+ * @param  $name        string  the name of the static-snapshot
+ * @param  $permalinks  array   getting only some pages of the websites [NOT TESTED]
  */
 function website_snapshot_generate_static_site($name, $permalinks=null) {
   $static_site_dir = str_replace('http://', '', get_site_url());
   $output_path = plugin_dir_path( __FILE__ ) . 'output/';
-  $snapshot_path = escapeshellargs($output_path . $name);
-  // SHELL ATTACK: escapeshellargs($snapshot_path) and exec(escapeshellcmd($foo))
+  $snapshot_path = esc_html($output_path . $name);
 
   $wget_command = 'wget ';
   $wget_command .= '--mirror ';
@@ -287,15 +269,14 @@ function website_snapshot_generate_static_site($name, $permalinks=null) {
   // execute wget command > should take a long time with videos
   exec($wget_command);
 
-  // rename the video paths
-
-  $snapshot_url = plugins_url('output/' . $name . '/', __FILE__);
-  create_relative_path_for_video($snapshot_path, $snapshot_url);
-
-  // rename($output_path . get_site_url(), $output_path . $name);
-
-  // create the tar file available for download
+  // rename the directory
   exec('cd ' . $output_path . ' && mv ' . $static_site_dir . ' ' . $name);
+
+  // replace the absolute links by relative ones
+  // $snapshot_url = plugins_url('output/' . $name . '/', __FILE__);
+  find_files_and_replace_absolute($snapshot_path, '/\.(html|css|js).*$/', $snapshot_path);
+
+  // create the tar file
   exec('cd ' . $output_path . ' && tar -cvf ' . get_home_path() . '/' . $name . '.tar ' . $name);
 
   // the archive is ready so delete the folder
@@ -304,69 +285,81 @@ function website_snapshot_generate_static_site($name, $permalinks=null) {
 }
 
 /**
-* Walk directory, find files and search and replace absolute paths with relative paths
-*/
-function find_files_and_replace_absolute($dir = '.', $pattern = '/./', $snapshot_url){
+ * find_files_and_replace_absolute find files and search and replace absolute paths with relative paths
+ * @param   $dir        string  the directory where to start
+ * @param   $pattern    string  the type of files on which to apply the search and replace
+ * @param   $root_path  string  the root path
+ */
+function find_files_and_replace_absolute($dir = '.', $pattern = '/./', $root_path){
   $prefix = $dir . '/';
   $dir = dir($dir);
-  while (false !== ($file = $dir->read())){
+  while (false !== ($file = $dir->read())) {
     if ($file === '.' || $file === '..') continue;
     $file = $prefix . $file;
-    $file_url = $snapshot_url . $file;
-    if (is_dir($file)) find_files_and_replace_absolute($file, $pattern, $snapshot_url);
-    if (preg_match($pattern, $file)){
-      echo $file . "\n";
-      echo $file_url . "\n";
-      $file_contents = get_file_contents_by_url($file_url);
-      $site_root_url = get_site_url();
-      var_dump($site_root_url);
-      $relative_path = get_relative_path($site_root_url, $file_url);
-      $file_contents = str_replace($site_root_url, $relative_path, $file_contents);
-      unlink($file);
+    if (is_dir($file)) find_files_and_replace_absolute($file, $pattern, $root_path);
+    if (preg_match($pattern, $file)) {
+      $file_contents = read_content($file);
+      $backtrack = get_backtrack($root_path, $file, $pattern);
+      $file_contents = str_replace(get_site_url() . '/', $backtrack, $file_contents);
+      unlink($file); // delete the file
       write_content($file, $file_contents);
     }
   }
 }
 
 /**
-* Get relative path
-*/
-function get_relative_path($site_root_url, $file_url) {
-  $path_without_root = explode($site_root_url, $file_url)[1];
-  $count = count(explode('/', $path_without_root));
-  return str_repeat('/..', $count);
+ * get_backtrack get the right number of ../ to replace the root URL of the site
+ * @param   $root_path  string  the root path of the site
+ * @param   $file       string  the path of the file
+ * @param   $pattern    string  the file types we are looking for
+ * @return              string
+ */
+function get_backtrack($root_path, $file, $pattern) {
+  $path_after_root = explode($root_path, $file)[1]
+  $count = count(explode('/', $path_after_root)) - 1; // don't count empty split set 
+  $count = $count - 1; // don't count file as a directory
+  return str_repeat('../', $count);
+}
+
+function replace_file_contents($root_url, $backtrack, $file_contents) {
+  str_replace($root_url, $backtrack, $file_contents);
 }
 
 /**
-* Write new content to file
-*/
+ * Read the content of a file
+ * @param   $file  string  the path of the file
+ * @return         string  the file contents
+ */
+function read_content($file) {
+  $file_handler = fopen($file, 'r') or die("can't open file");
+  $contents = fread($file_handler, filesize($file));
+  fclose($file_handler);
+  return $contents;
+}
+
+/**
+ * Write new content to file
+ * @param   $file           string  the path of the file
+ * @param   $file_contents  string  the content of the file
+ */
 function write_content($file, $file_contents) {
-  $fh = fopen($file, 'w') or die("can't open file");
-  fwrite($fh, $file_contents);
-  fclose($fh);
+  $file_handler = fopen($file, 'w+') or die("can't open file");
+  fwrite($file_handler, $file_contents);
+  fclose($file_handler);
 }
 
-/**
-* Get file contents by URL
-*/
-function get_file_contents_by_url($url) {
-  $ch = curl_init();
-  curl_setopt($ch, CURLOPT_URL, $url);
-  curl_setopt($ch, CURLOPT_HEADER, false);
-  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-  $file = curl_exec($ch);
-  curl_close($ch);
-  return $file;
-}
-
-/**
-* Set relative paths
-*/
-
-function create_relative_path_for_video($snapshot_path, $snapshot_url) {
-  // find_files_and_replace_absolute($snapshot_path, '/\.(html|css|js)$/');
-  find_files_and_replace_absolute($snapshot_path, '/\.$/', $snapshot_url);
-}
+// /**
+// * Get file contents by URL
+// */
+// function get_file_contents_by_url($url) {
+//   $ch = curl_init();
+//   curl_setopt($ch, CURLOPT_URL, $url);
+//   curl_setopt($ch, CURLOPT_HEADER, false);
+//   curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+//   $file = curl_exec($ch);
+//   curl_close($ch);
+//   return $file;
+// }
 
 /**
  * website_snapshot_static_exporter_options_install create the table
