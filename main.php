@@ -251,6 +251,7 @@ function website_snapshot_generate_static_site($name, $permalinks=null) {
   $wget_command = 'wget ';
   $wget_command .= '--mirror ';
   $wget_command .= '--adjust-extension ';
+  $wget_command .= '-H -Dgoogleapis.com,gstatic.com,' . $static_site_dir . ' ';
   $wget_command .= '--convert-links ';
   $wget_command .= '--page-requisites ';
   $wget_command .= '--retry-connrefused ';
@@ -268,6 +269,9 @@ function website_snapshot_generate_static_site($name, $permalinks=null) {
 
   // execute wget command > should take a long time with videos
   exec($wget_command);
+
+  // move google fonts css directory inside root directory
+  exec('cd ' . $output_path . ' && mv fonts.googleapis.com ' . $static_site_dir . ' && mv fonts.gstatic.com ' . $static_site_dir . '/fonts.googleapis.com');
 
   // rename the directory
   exec('cd ' . $output_path . ' && mv ' . $static_site_dir . ' ' . $name);
@@ -301,6 +305,7 @@ function find_files_and_replace_absolute($dir = '.', $pattern = '/./', $root_pat
       $file_contents = read_content($file);
       $backtrack = get_backtrack($root_path, $file, $pattern);
       $file_contents = str_replace(get_site_url() . '/', $backtrack, $file_contents);
+      $file_contents = str_replace('../fonts.g', 'fonts.g', $file_contents);
       unlink($file); // delete the file
       write_content($file, $file_contents);
     }
@@ -315,8 +320,8 @@ function find_files_and_replace_absolute($dir = '.', $pattern = '/./', $root_pat
  * @return              string
  */
 function get_backtrack($root_path, $file, $pattern) {
-  $path_after_root = explode($root_path, $file)[1]
-  $count = count(explode('/', $path_after_root)) - 1; // don't count empty split set 
+  $path_after_root = explode($root_path, $file)[1];
+  $count = count(explode('/', $path_after_root)) - 1; // don't count empty split set
   $count = $count - 1; // don't count file as a directory
   return str_repeat('../', $count);
 }
