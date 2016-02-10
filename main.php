@@ -321,7 +321,7 @@ function find_files_and_replace_absolute($dir = '.', $pattern = '/./', $root_pat
  * @return              string
  */
 function get_backtrack($root_path, $file, $pattern) {
-  $path_after_root = explode($root_path, $file)[1]
+  $path_after_root = explode($root_path, $file)[1];
   $count = count(explode('/', $path_after_root)) - 1; // don't count empty split set
   $count = $count - 1; // don't count file as a directory
   return str_repeat('../', $count);
