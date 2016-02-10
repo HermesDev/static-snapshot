@@ -2,7 +2,7 @@
 .idea
 sftp-config*
 .svnignore
-
+.ftpconfig
 trunk
 .svn
 tags
