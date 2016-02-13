@@ -286,8 +286,8 @@ function website_snapshot_generate_static_site($name, $permalinks=null) {
 
   // the archive is ready so delete the folder
   exec('rm -rf ' . $snapshot_path);
-
 }
+
 
 /**
  * find_files_and_replace_absolute find files and search and replace absolute paths with relative paths
@@ -305,13 +305,14 @@ function find_files_and_replace_absolute($dir = '.', $pattern = '/./', $root_pat
     if (preg_match($pattern, $file)) {
       $content = read_content($file);
       $backtrack = get_backtrack($root_path, $file, $pattern);
-      $content = format_content_for_local_use(get_site_url(), $backtrack, $content);
-      $content = str_replace('../fonts.g', 'fonts.g', $content);
+      $content = format_content_for_local_use(get_site_url(), $backtrack, $content, $file);
+      $content = str_replace('../fonts.g', $backtrack.'fonts.g', $content);
       unlink($file); // delete the file
       write_content($file, $content);
     }
   }
 }
+
 
 /**
  * get_backtrack get the right number of ../ to replace the root URL of the site
@@ -327,6 +328,7 @@ function get_backtrack($root_path, $file, $pattern) {
   return str_repeat('../', $count);
 }
 
+
 /**
  * format_content_for_local_use make sure the URLS are now locals
  * @param  string $root_url  the root path of the site
@@ -334,23 +336,24 @@ function get_backtrack($root_path, $file, $pattern) {
  * @param  string $content   the current file contents
  * @return string            the current file contents for local use
  */
-function format_content_for_local_use($root_url, $backtrack, $content) {
-  // Get anything in single or double quotes that has the root_url in it
-  $pattern1 = '/(\'|")' . preg_quote($root_url, '/') . '\/(\.*\.\.*)(\'|")/';
-  $pattern2 = '/(\'|")' . preg_quote($root_url, '/') . '\/(.*)(\'|")/';
+function format_content_for_local_use($root_url, $backtrack, $content, $file) {
+  $root_url_regex = preg_quote($root_url, '/');
 
-  // Replace by quote ($1) + $backtrack (../) + extra slugs ($2) + /index.html (option) + quote ($3)
-  $replacement1 = '$1' . $backtrack . '$2$3';
-  $replacement2 = '$1' . $backtrack . '$2/index.html$3';
+  // Match: window.location.href = 'http://myurl/one.1/two.2/three'
+  // !Match: window.location.href = 'http://myurl/one.1/two.2/three.3'
+  $pattern = '/(window\.location\.href\s=\s)(\'|")' . $root_url_regex . '\/(.*\/)*(\w+)(\'|")/';
+  
+  // Quote ($1) + backtrack (../) + slugs ($2) + /index.html ($3) + quote ($4)
+  $replacement = '$1$2' . $backtrack . '$3$4/index.html$5';
 
-  // Do the replaces and return the content
   // preg_replace return: If matches are found, the new content will be returned, 
   // otherwise content will be returned unchanged or NULL if an error occurred.
-  $content = preg_replace($pattern1, $replacement1, $content);
-  $content = preg_replace($pattern2, $replacement2, $content);
+  // $content = preg_replace($pattern, $replacement, $content);
 
-  return $content;
+  // replace the root URL with the backtrack (../) for the remaning items
+  return str_replace($root_url.'/', $backtrack, $content);
 }
+
 
 /**
  * Read the content of a file
@@ -364,6 +367,7 @@ function read_content($file) {
   return $contents;
 }
 
+
 /**
  * Write new content to file
  * @param   $file     string  the path of the file
@@ -375,18 +379,6 @@ function write_content($file, $content) {
   fclose($file_handler);
 }
 
-// /**
-// * Get file contents by URL
-// */
-// function get_file_contents_by_url($url) {
-//   $ch = curl_init();
-//   curl_setopt($ch, CURLOPT_URL, $url);
-//   curl_setopt($ch, CURLOPT_HEADER, false);
-//   curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-//   $file = curl_exec($ch);
-//   curl_close($ch);
-//   return $file;
-// }
 
 /**
  * website_snapshot_static_exporter_options_install create the table
