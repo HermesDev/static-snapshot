@@ -305,7 +305,7 @@ function find_files_and_replace_absolute($dir = '.', $pattern = '/./', $root_pat
     if (preg_match($pattern, $file)) {
       $content = read_content($file);
       $backtrack = get_backtrack($root_path, $file, $pattern);
-      $content = format_content_for_local_use(get_site_url(), $backtrack, $content, $file);
+      $content = format_content_for_local_use(get_site_url(), $backtrack, $content);
       $content = str_replace('../fonts.g', $backtrack.'fonts.g', $content);
       unlink($file); // delete the file
       write_content($file, $content);
@@ -336,7 +336,7 @@ function get_backtrack($root_path, $file, $pattern) {
  * @param  string $content   the current file contents
  * @return string            the current file contents for local use
  */
-function format_content_for_local_use($root_url, $backtrack, $content, $file) {
+function format_content_for_local_use($root_url, $backtrack, $content) {
   $root_url_regex = preg_quote($root_url, '/');
 
   // Match: window.location.href = 'http://myurl/one.1/two.2/three'
@@ -348,7 +348,7 @@ function format_content_for_local_use($root_url, $backtrack, $content, $file) {
 
   // preg_replace return: If matches are found, the new content will be returned, 
   // otherwise content will be returned unchanged or NULL if an error occurred.
-  // $content = preg_replace($pattern, $replacement, $content);
+  $content = preg_replace($pattern, $replacement, $content);
 
   // replace the root URL with the backtrack (../) for the remaning items
   return str_replace($root_url.'/', $backtrack, $content);
