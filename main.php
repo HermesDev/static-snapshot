@@ -169,11 +169,11 @@ function website_snapshot_add_snapshot() {
   $name = str_replace(' ', '_', $name);
 
   global $wpdb;
+
+  // check if the snapshot name already exists
   $table_name = $wpdb->prefix . 'snapshot';
   $selectQuery = "SELECT * FROM " . $table_name . " WHERE name = '" . $name . "'";
-
   $snapshot = $wpdb->get_row($selectQuery);
-  // check if the snapshot name already exists
   if($snapshot != null) {
     set_error_headers();
     die(json_encode(array('message' => 'Snapshot name "' . $name . '" already exists')));
@@ -187,6 +187,7 @@ function website_snapshot_add_snapshot() {
   $now->setTimezone(new DateTimeZone('US/Mountain'));
   $creation_date = $now->format('Y-m-d H:i:s');
 
+  // Insert the new Static Snapshot into the DB
   $wpdb->insert($table_name, array('name' => $name, 'creationDate' => $creation_date), array('%s', '%s'));
   $snapshot = $wpdb->get_row($selectQuery);
 
