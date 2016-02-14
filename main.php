@@ -306,7 +306,7 @@ function find_files_and_replace_absolute($dir = '.', $pattern = '/./', $root_pat
       $content = read_content($file);
       $backtrack = get_backtrack($root_path, $file, $pattern);
       $content = format_content_for_local_use(get_site_url(), $backtrack, $content);
-      $content = str_replace('../fonts.g', $backtrack.'fonts.g', $content);
+      $content = str_replace('../fonts.g', 'fonts.g', $content);
       unlink($file); // delete the file
       write_content($file, $content);
     }
@@ -323,8 +323,8 @@ function find_files_and_replace_absolute($dir = '.', $pattern = '/./', $root_pat
  */
 function get_backtrack($root_path, $file, $pattern) {
   $path_after_root = explode($root_path, $file)[1];
-  $count = count(explode('/', $path_after_root)) - 1; // don't count empty split set
-  $count = $count - 1; // don't count file as a directory
+  $count = count(explode('/', $path_after_root)) - 1; // don't beginning
+  $count = $count - 1; // don't count end
   return str_repeat('../', $count);
 }
 
@@ -346,12 +346,8 @@ function format_content_for_local_use($root_url, $backtrack, $content) {
   // Quote ($1) + backtrack (../) + slugs ($2) + /index.html ($3) + quote ($4)
   $replacement = '$1$2' . $backtrack . '$3$4/index.html$5';
 
-  // preg_replace return: If matches are found, the new content will be returned, 
-  // otherwise content will be returned unchanged or NULL if an error occurred.
   $content = preg_replace($pattern, $replacement, $content);
-
-  // replace the root URL with the backtrack (../) for the remaning items
-  return str_replace($root_url.'/', $backtrack, $content);
+  return str_replace($root_url.'/', $backtrack, $content); // backtrack for remaning items
 }
 
 
