@@ -180,9 +180,9 @@ function website_snapshot_add_snapshot() {
   }
 
   // Generate the snapshot with wget
-  website_snapshot_generate_static_site($name);
+  $snapshot_url = website_snapshot_generate_static_site($name);
 
-  // TODO: autodetect TimeZone from the browser with Javascript
+  // TODO: Give the user the choice of the timezone
   $now = new DateTime('NOW');
   $now->setTimezone(new DateTimeZone('US/Mountain'));
   $creation_date = $now->format('Y-m-d H:i:s');
@@ -191,9 +191,7 @@ function website_snapshot_add_snapshot() {
   $wpdb->insert($table_name, array('name' => $name, 'creationDate' => $creation_date), array('%s', '%s'));
   $snapshot = $wpdb->get_row($selectQuery);
 
-  $snapshot_url = get_site_url() . '/' . $snapshot->name . '.tar';
-
-  // success response
+  // Success response
   header('Content-Type: application/json');
   $response = array(
     'message' => 'Snapshot "' . $name . '" has been added to the database',
@@ -244,6 +242,7 @@ function set_error_headers() {
  * Use wget to download a static version of the website
  * @param  $name        string  the name of the static-snapshot
  * @param  $permalinks  array   getting only some pages of the websites [NOT TESTED]
+ * @return              string  snapshot url
  */
 function website_snapshot_generate_static_site($name, $permalinks=null) {
   $name = esc_html($name); // $name is used in some exec
@@ -270,24 +269,14 @@ function website_snapshot_generate_static_site($name, $permalinks=null) {
     }
   }
 
-  // execute wget command > should take a long time with videos
-  exec($wget_command);
+  exec($wget_command); // WGET execution
+  exec('cd ' . $output_path . ' && mv fonts.googleapis.com ' . $static_site_dir . ' && mv fonts.gstatic.com ' . $static_site_dir . '/fonts.googleapis.com'); // move google fonts to root dir; TODO: do it for all CDN
+  exec('cd ' . $output_path . ' && mv ' . $static_site_dir . ' ' . $name); // rename dir
+  find_files_and_replace_absolute($snapshot_path, '/\.(html|css|js).*$/', $snapshot_path); // fix absolute urls
+  exec('cd ' . $output_path . ' && tar -cvf ' . get_home_path() . '/' . $name . '.tar ' . $name); // create tar file
+  exec('rm -rf ' . $snapshot_path); // delete directory
 
-  // move google fonts css directory inside root directory
-  exec('cd ' . $output_path . ' && mv fonts.googleapis.com ' . $static_site_dir . ' && mv fonts.gstatic.com ' . $static_site_dir . '/fonts.googleapis.com');
-
-  // rename the directory
-  exec('cd ' . $output_path . ' && mv ' . $static_site_dir . ' ' . $name);
-
-  // replace the absolute links by relative ones
-  // $snapshot_url = plugins_url('output/' . $name . '/', __FILE__);
-  find_files_and_replace_absolute($snapshot_path, '/\.(html|css|js).*$/', $snapshot_path);
-
-  // create the tar file
-  exec('cd ' . $output_path . ' && tar -cvf ' . get_home_path() . '/' . $name . '.tar ' . $name);
-
-  // the archive is ready so delete the folder
-  exec('rm -rf ' . $snapshot_path);
+  return get_site_url() . '/' . $name . '.tar';
 }
 
 
