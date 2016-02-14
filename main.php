@@ -132,6 +132,10 @@ function website_snapshot_create_snapshot_UI() { ?>
   <?php
 }
 
+// ajax hooks for delete
+add_action('wp_ajax_delete_snapshot', 'website_snapshot_delete_snapshot');
+add_action('wp_ajax_nopriv_delete_snapshot', 'website_snapshot_delete_snapshot');
+
 /**
  * website_snapshot_delete_snapshot delete the snapshot with the specified name
  */
@@ -151,14 +155,14 @@ function website_snapshot_delete_snapshot() {
   die(); // otherwise string is returned with 0 at the end
 }
 
-// ajax hooks
-add_action('wp_ajax_delete_snapshot', 'website_snapshot_delete_snapshot');
-add_action('wp_ajax_nopriv_delete_snapshot', 'website_snapshot_delete_snapshot');
+// ajax hooks for create
+add_action('wp_ajax_add_snapshot', 'website_snapshot_add_snapshot');
+add_action('wp_ajax_nopriv_add_snapshot', 'website_snapshot_add_snapshot');
 
 /**
- * website_snapshot_add_snapshot_to_db insert the new snapshot to the snapshot table
+ * website_snapshot_add_snapshot insert the new snapshot to the snapshot table
  */
-function website_snapshot_add_snapshot_to_db() {
+function website_snapshot_add_snapshot() {
   $name = get_sanitize_input_name($_POST['name']);
 
   // replace any space by underscore
@@ -234,9 +238,6 @@ function set_error_headers() {
   header('Content-Type: application/json; charset=UTF-8');
 }
 
-// ajax hooks
-add_action('wp_ajax_add_snapshot', 'website_snapshot_add_snapshot_to_db');
-add_action('wp_ajax_nopriv_add_snapshot', 'website_snapshot_add_snapshot_to_db');
 
 /**
  * Use wget to download a static version of the website
