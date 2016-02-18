@@ -2,10 +2,10 @@
 
 /*
 
-Plugin Name: Get Static App
-Plugin URI: http://hermesdevelopment.com
-Description: Get a static version of the website with wget
-Version: 0.1.0
+Plugin Name: Static Snapshot
+Plugin URI: http://staticsnapshot.com
+Description: Create a static version of your WordPress site.
+Version: 0.2.0
 Author: Hermes Development
 Author URI: http://hermesdevelopment.com
 License: GPLv2
@@ -253,7 +253,7 @@ function website_snapshot_generate_static_site($name, $permalinks=null) {
   $wget_command = 'wget ';
   $wget_command .= '--mirror ';
   $wget_command .= '--adjust-extension ';
-  $wget_command .= '-H -Dgoogleapis.com,gstatic.com,' . $static_site_dir . ' ';
+  $wget_command .= '-H -Dgoogleapis.com,gstatic.com,bootstrapcdn.com,cloudflare.com,' . $static_site_dir . ' ';
   $wget_command .= '--convert-links ';
   $wget_command .= '--page-requisites ';
   $wget_command .= '--retry-connrefused ';
@@ -270,7 +270,9 @@ function website_snapshot_generate_static_site($name, $permalinks=null) {
   }
 
   exec($wget_command); // WGET execution
-  exec('cd ' . $output_path . ' && mv fonts.googleapis.com ' . $static_site_dir . ' && mv fonts.gstatic.com ' . $static_site_dir . '/fonts.googleapis.com'); // move google fonts to root dir; TODO: do it for all CDN
+  exec('cd ' . $output_path . ' && mv fonts.googleapis.com ' . $static_site_dir . ' && mv fonts.gstatic.com ' . $static_site_dir . '/fonts.googleapis.com'); // move google fonts to root dir
+  exec('cd ' . $output_path . ' && mv maxcdn.bootstrapcdn.com ' . $static_site_dir . ' '); // move bootstrap maxcdn assets to root dir
+  exec('cd ' . $output_path . ' && mv cdnjs.cloudflare.com ' . $static_site_dir . ' '); // move cloudflare assets to root dir; TODO: do it for all CDN
   exec('cd ' . $output_path . ' && mv ' . $static_site_dir . ' ' . $name); // rename dir
   find_files_and_replace_absolute($snapshot_path, '/\.(html|css|js).*$/', $snapshot_path); // fix absolute urls
   exec('cd ' . $output_path . ' && tar -cvf ' . get_home_path() . '/' . $name . '.tar ' . $name); // create tar file
@@ -333,7 +335,7 @@ function format_content_for_local_use($root_url, $backtrack, $content) {
   // Match: window.location.href = 'http://myurl/one.1/two.2/three'
   // !Match: window.location.href = 'http://myurl/one.1/two.2/three.3'
   $pattern = '/(window\.location\.href\s=\s)(\'|")' . $root_url_regex . '\/(.*\/)*(\w+)(\'|")/';
-  
+
   // Quote ($1) + backtrack (../) + slugs ($2) + /index.html ($3) + quote ($4)
   $replacement = '$1$2' . $backtrack . '$3$4/index.html$5';
 
