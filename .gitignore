@@ -2,3 +2,10 @@
 .idea
 sftp-config*
 .svnignore
+.ftpconfig
+trunk
+.svn
+tags
+branches
+assets
+phpwee-php-minifier
