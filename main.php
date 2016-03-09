@@ -1,5 +1,4 @@
 <?php
-
 /*
 
 Plugin Name: Static Snapshot
@@ -11,7 +10,6 @@ Author URI: http://hermesdevelopment.com
 License: GPLv2
 
  */
-
 define('WEBSITE_SNAPSHOT__PLUGIN_URL', plugin_dir_url( __FILE__ ));
 
 
@@ -253,7 +251,7 @@ function website_snapshot_generate_static_site($name, $permalinks=null) {
   $wget_command = 'wget ';
   $wget_command .= '--mirror ';
   $wget_command .= '--adjust-extension ';
-  $wget_command .= '-H -Dgoogleapis.com,gstatic.com,bootstrapcdn.com,cloudflare.com,' . $static_site_dir . ' ';
+  $wget_command .= '-H -Dgoogleapis.com,gstatic.com,bootstrapcdn.com,cloudflare.com,zencdn.net,' . $static_site_dir . ' ';
   $wget_command .= '--convert-links ';
   $wget_command .= '--page-requisites ';
   $wget_command .= '--retry-connrefused ';
@@ -270,9 +268,25 @@ function website_snapshot_generate_static_site($name, $permalinks=null) {
   }
 
   exec($wget_command); // WGET execution
+
+  $googleapis = $output_path . 'fonts.googleapis.com';
+  $bootstrapCloudflare = $output_path . 'maxcdn.bootstrapcdn.com';
+  $cloudflare = $output_path . 'cdnjs.cloudflare.com';
+  $zencdn = $output_path . 'vjs.zencdn.net';
+
+  if (file_exists($googleapis)) {
   exec('cd ' . $output_path . ' && mv fonts.googleapis.com ' . $static_site_dir . ' && mv fonts.gstatic.com ' . $static_site_dir . '/fonts.googleapis.com'); // move google fonts to root dir
+  }
+  if (file_exists($bootstrapCloudflare)) {
   exec('cd ' . $output_path . ' && mv maxcdn.bootstrapcdn.com ' . $static_site_dir . ' '); // move bootstrap maxcdn assets to root dir
-  exec('cd ' . $output_path . ' && mv cdnjs.cloudflare.com ' . $static_site_dir . ' '); // move cloudflare assets to root dir; TODO: do it for all CDN
+  }
+  if (file_exists($cloudflare)) {
+  exec('cd ' . $output_path . ' && mv cdnjs.cloudflare.com ' . $static_site_dir . ' '); // move cloudflare assets to root dir
+  }
+  if (file_exists($zencdn)) {
+  exec('cd ' . $output_path . ' && mv vjs.zencdn.net ' . $static_site_dir . ' '); // move zencdn assets to root dir; TODO: do it for all CDN
+  }
+
   exec('cd ' . $output_path . ' && mv ' . $static_site_dir . ' ' . $name); // rename dir
   find_files_and_replace_absolute($snapshot_path, '/\.(html|css|js).*$/', $snapshot_path); // fix absolute urls
   exec('cd ' . $output_path . ' && tar -cvf ' . get_home_path() . '/' . $name . '.tar ' . $name); // create tar file
@@ -300,6 +314,9 @@ function find_files_and_replace_absolute($dir = '.', $pattern = '/./', $root_pat
       $backtrack = get_backtrack($root_path, $file, $pattern);
       $content = format_content_for_local_use(get_site_url(), $backtrack, $content);
       $content = str_replace('../fonts.g', 'fonts.g', $content);
+      $content = str_replace('../maxcdn.b', 'maxcdn.b', $content);
+      $content = str_replace('../cdnjs.c', 'cdnjs.c', $content);
+      $content = str_replace('../vjs.z', 'vjs.z', $content);
       unlink($file); // delete the file
       write_content($file, $content);
     }
