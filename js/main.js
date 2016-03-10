@@ -30,7 +30,7 @@ jQuery(function($) {
     }
 
     $('#snapshot-plugin .loader-inner.ball-grid-pulse').css('display', 'inline');
-
+    
     $.ajax({
       method: 'POST',
       url: 'admin-ajax.php',
@@ -53,9 +53,18 @@ jQuery(function($) {
       
     }).fail(function(response) {
       console.log(response);
+      console.log(response.responseText);
 
-      $errorOutput.text(response.responseJSON.message);
-      $errorOutput.show();
+      if(Object.hasOwnProperty('responseJSON')) {
+        $errorOutput.text(response.responseJSON.message);
+        $errorOutput.show();
+      } else if(Object.hasOwnProperty('statusText') 
+          && Object.hasOwnProperty('status') 
+          && Object.status == 504 
+          && Object.statusText == "Gateway Time-out") {
+        clear_output(10);
+        window.location.reload;        
+      }
 
     }).always(function(response) {
       $loader.hide();
