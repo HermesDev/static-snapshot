@@ -4,7 +4,7 @@
 Plugin Name: Static Snapshot
 Plugin URI: http://staticsnapshot.com
 Description: Create a static version of your WordPress site.
-Version: 0.2.0
+Version: 0.2.1
 Author: Hermes Development
 Author URI: http://hermesdevelopment.com
 License: GPLv2
@@ -332,7 +332,8 @@ function find_files_and_replace_absolute($dir = '.', $pattern = '/./', $root_pat
  * @return              string  repeat number of ../ one after the other
  */
 function get_backtrack($root_path, $file, $pattern) {
-  $path_after_root = explode($root_path, $file)[1];
+  $path_after_root_array = explode($root_path, $file);
+  $path_after_root = $path_after_root_array[1];
   $count = count(explode('/', $path_after_root)) - 1; // don't beginning
   $count = $count - 1; // don't count end
   return str_repeat('../', $count);
