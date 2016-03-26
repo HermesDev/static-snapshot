@@ -30,6 +30,9 @@ Mac OS X users need wget installed - here's a guide: http://osxdaily.com/2012/05
 
 == Changelog ==
 
+= 0.2.1 =
+* fixed pre-PHP 5.4 array index bug
+
 = 0.2.0 =
 * rudimentary CDN support
 * now supports HTML5 <video> tag

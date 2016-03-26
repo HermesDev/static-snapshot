@@ -4,7 +4,7 @@
 Plugin Name: Static Snapshot
 Plugin URI: http://staticsnapshot.com
 Description: Create a static version of your WordPress site.
-Version: 0.2.0
+Version: 0.2.1
 Author: Hermes Development
 Author URI: http://hermesdevelopment.com
 License: GPLv2
